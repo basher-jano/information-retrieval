@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Search Results</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+    }
+
+    h3 {
+      margin-top: 30px;
+      font-size: 18px;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+      margin-top: 10px;
+    }
+
+    li {
+      margin-bottom: 20px;
+      border: 1px solid #f0f0f0;
+      padding: 10px;
+      border-radius: 5px;
+    }
+
+    .content {
+      color: #707070;
+      margin-bottom: 5px;
+    }
+
+    .doc-id {
+      color: #707070;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Query: <span id="query"></span></h2>
+
+  <h3>Search Results:</h3>
+
+  <ul id="resultsList"></ul>
+
+  <script>
+    // Retrieve the query and results from the URL
+    var queryString = window.location.search;
+    var urlParams = new URLSearchParams(queryString);
+    var query = urlParams.get("q");
+    var results = JSON.parse(urlParams.get("results"));
+
+    // Display the query in the page
+    var queryElement = document.getElementById("query");
+    queryElement.textContent = decodeURIComponent(query);
+
+    // Display the search results
+    var resultsList = document.getElementById("resultsList");
+    results.forEach(function(item) {
+      var listItem = document.createElement("li");
+      var content = document.createElement("p");
+      content.classList.add("content");
+      content.textContent = item.content;
+      var docId = document.createElement("p");
+      docId.classList.add("doc-id");
+      docId.textContent = "ID: " + item.doc_id;
+      listItem.appendChild(content);
+      listItem.appendChild(docId);
+      resultsList.appendChild(listItem);
+    });
+  </script>
+</body>
+</html>

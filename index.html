@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Index</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+  
+    #searchContainer {
+      display: flex;
+      justify-content: center;
+      margin-top: 150px;
+      position: relative;
+    }
+  
+    #searchInput {
+      padding: 10px;
+      width: 500px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-right: none;
+      border-radius: 3px 0 0 3px;
+    }
+  
+    #searchButton {
+      padding: 10px 20px;
+      background-color: #f2f2f2;
+      border: 1px solid #ccc;
+      border-left: none;
+      border-radius: 0 3px 3px 0;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  
+    #suggestionList {
+      position: absolute;
+      background-color: #f2f2f2;
+      border: 1px solid #ccc;
+      border-top: none;
+      width: 500px;
+      margin: 0;
+      padding: 0;
+      list-style-type: none;
+      z-index: 1;
+      top: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+  
+    #suggestionList li {
+      padding: 8px;
+      cursor: pointer;
+    }
+  
+    #suggestionList li:hover {
+      background-color: #e2e2e2;
+    }
+  
+    /* New style for radioContainer */
+    #importContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center; /* Added align-items property */
+  }
+
+  #importButton {
+    padding: 10px 20px;
+    background-color: #f2f2f2;
+    border: 1px solid #ccc;
+    border-radius: 0 3px 3px 0;
+    font-size: 16px;
+    cursor: pointer;
+  }
+    #importButton {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #f2f2f2;
+      border: 1px solid #ccc;
+      border-radius: 0 3px 3px 0;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #radioContainer {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+  
+    .radioLabel {
+      margin: 0 10px;
+      font-size: 16px;
+    }
+
+    #wrapperDiv {
+    background-color: #e6e5e5;
+    padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  
+
+  <div id="wrapperDiv">
+    <div id="radioContainer">
+      <input type="radio" id="scienceRadio" name="datasetRadio" value="0" checked>
+      <label class="radioLabel" for="scienceRadio">Science</label>
+      <input type="radio" id="clinicalRadio" name="datasetRadio" value="1">
+      <label class="radioLabel" for="clinicalRadio">Clinical</label>
+    </div>
+  
+    <div id="importContainer">
+      <button id="importButton" onclick="importDataset()">Import Dataset</button>
+    </div>
+  </div>
+
+  <div id="searchContainer">
+    <input type="text" id="searchInput" placeholder="Enter your query">
+    <button id="searchButton" onclick="search()">Search</button>
+    <ul id="suggestionList"></ul>
+  </div>
+
+  <script>
+    var searchInput = document.getElementById("searchInput");
+    var suggestionList = document.getElementById("suggestionList");
+
+    searchInput.addEventListener("input", function() {
+      var currentInput = searchInput.value;
+      getSuggestions(currentInput);
+    });
+
+    suggestionList.addEventListener("click", function(event) {
+      if (event.target.tagName === "LI") {
+        search(event.target.textContent);
+      }
+    });
+
+    function getSuggestions(input) {
+      fetch("/api/suggestion", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ query: input })
+      })
+      .then(function(response) {
+        return response.json();
+      })
+      .then(function(result) {
+        displaySuggestions(result.result);
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
+    }
+
+    function displaySuggestions(suggestions) {
+      suggestionList.innerHTML = "";
+
+      suggestions.forEach(function(suggestion) {
+        var listItem = document.createElement("li");
+        listItem.textContent = suggestion;
+        suggestionList.appendChild(listItem);
+      });
+
+      if (suggestions.length > 0) {
+        suggestionList.style.display = "block";
+      } else {
+        suggestionList.style.display = "none";
+      }
+    }
+
+    function search(query) {
+      var searchQuery = query || searchInput.value;
+
+      fetch("/api/search", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ query: searchQuery })
+      })
+      .then(function(response) {
+        return response.json();
+      })
+      .then(function(result) {
+        var url = "search-result.html?q=" + encodeURIComponent(searchQuery) + "&results=" + encodeURIComponent(JSON.stringify(result.result));
+        window.location.href = url;
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
+    }
+    function importDataset() {
+            var value = document.querySelector('input[name="datasetRadio"]:checked').value;
+
+            fetch("/import_dataset/" + value)
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(result) {
+                    alert(result.message);
+                })
+                .catch(function(error) {
+                    console.log(error);
+                });
+        }
+  </script>
+</body>
+</html>
