@@ -1,6 +1,6 @@
 
 
-# Search Engine for Clinical and Science Datasets
+# information retrieval system for Clinical and Science Datasets
 
 ## Overview
 
