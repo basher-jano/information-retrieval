@@ -17,13 +17,13 @@ We are working with two Information Retrieval (IR) datasets:
 The project directory contains the following files:
 
 - **clinical_dataset_proccisng.ipynb**: Contains the methods used for cleaning the documents in the clinical dataset.
-- **clinical_dataset_vector_store.ipynb**: Contains the modified code for storing the vectors of the clinical dataset using Pinecone.
-- **clinical_dataset_word_embedding.ipynb**: Contains the modified code for word embedding with Word2Vec model for the clinical dataset.
 - **clinical_dataset_evaluation.ipynb**: Contains the Mean Average Precision (MAP) and Mean Reciprocal Rank (MRR) results after running all the queries in the clinical dataset.
+- **clinical_dataset_word_embedding.ipynb**: Contains the modified code for word embedding with Word2Vec model for the clinical dataset.
+- **clinical_dataset_vector_store.ipynb**: Contains the modified code for storing the vectors of the clinical dataset using Pinecone.
 - **science_dataset_processing.ipynb**: Contains the methods used for cleaning the documents in the science dataset.
-- **science_dataset_vector_store.ipynb**: Contains the modified code for storing the vectors of the science dataset using Pinecone.
-- **science_dataset_word_embedding.ipynb**: Contains the modified code for word embedding with Word2Vec model for the science dataset.
 - **science_dataset_evaluation.ipynb**: Contains the MAP and MRR results after running all the queries in the science dataset.
+- **science_dataset_word_embedding.ipynb**: Contains the modified code for word embedding with Word2Vec model for the science dataset.
+- **science_dataset_vector_store.ipynb**: Contains the modified code for storing the vectors of the science dataset using Pinecone.
 - **index.html**: The main HTML page for the search engine.
 - **search-result.html**: The HTML page for displaying the search results.
 - **search_engin.py**: The backend Python file containing the API endpoints and search engine logic.
