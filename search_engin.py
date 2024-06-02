@@ -20,6 +20,9 @@ import csv
 import pickle
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.exceptions import NotFittedError
+from typing import List
+from scipy.sparse import csr_matrix
+import numpy as np
 
 # SCIENCE DATASET
 
@@ -182,9 +185,6 @@ def dataProcessing(text):
     return text
 
 
-
-
-
 def getQuerySuggestions(query, queries_vectorizer, vectorized_queries, queries):
     try:
         vectorized_query = queries_vectorizer.transform([query])
@@ -204,25 +204,15 @@ def getQuerySuggestions(query, queries_vectorizer, vectorized_queries, queries):
     return result[:5]
 
 
-def runQueryWithAllDocsVecor(query, vectorizer, vectorized_docs, original_docs):
-    query = dataProcessing(query)
-    vectorized_query = vectorizer.transform([query])
-    # Calculate cosine similarity for vectorized_query and vectorized_docs
-    similarity_scores = cosine_similarity(vectorized_query, vectorized_docs)
-    # This result contains objects like this (3796, 0.9705645380366313) first attribute (index in related docs)
-    # second attribute (similarity score)
-    results = list(enumerate(similarity_scores[0]))
-    # Sort results by score (descending) from higher score to lower score 
-    sorted_results = sorted(results, key=lambda x: x[1], reverse=True)
-    # Fetch real docs with ids from original docs and scores for each doc
+def getFirstTenDocument(sorted_results):
     result = []
     i = 0
     try:
         for res in sorted_results:
             if i < 10:
-                doc_id= int(original_docs['doc_id'][res[0]])  # Convert to Python int
+                doc_id= int(OriginalDocuments['doc_id'][res[0]])  # Convert to Python int
                 # doc_id= original_docs['doc_id'][res[0]]  
-                content = original_docs['text'][res[0]]
+                content = OriginalDocuments['text'][res[0]]
                 result.append({"doc_id": doc_id, "content": content})
                 i += 1
             else:
@@ -230,14 +220,14 @@ def runQueryWithAllDocsVecor(query, vectorizer, vectorized_docs, original_docs):
     except Exception as e:
         for res in sorted_results:
             if i < 10:
-                doc_id = str(original_docs['doc_id'][res[0]])  # Convert to string
+                doc_id = str(OriginalDocuments['doc_id'][res[0]])  # Convert to string
                 content = (
                     "title: "
-                    + str(original_docs['title'][res[0]])
+                    + str(OriginalDocuments['title'][res[0]])
                     + ', summary: '
-                    + str(original_docs['summary'][res[0]])
+                    + str(OriginalDocuments['summary'][res[0]])
                     + ', detailed_description: '
-                    + str(original_docs['detailed_description'][res[0]])
+                    + str(OriginalDocuments['detailed_description'][res[0]])
                 )
                 result.append({"doc_id": doc_id, "content": content})
                 i += 1
@@ -252,6 +242,8 @@ app = FastAPI()
 class Query(BaseModel):
     query: str
 
+class QueryVector(BaseModel):
+    query_vector: List[List[float]]
 
 @app.get("/", response_class=HTMLResponse)
 def read_index():
@@ -265,14 +257,42 @@ def read_search_result():
     with open(index_path, "r") as f:
         return f.read()
 
-@app.post("/api/search")
-def process_query(query: Query):
-    # Access the query parameter from the request body
-    user_query = query.query
-    # Process the query and generate the search result
-    result = runQueryWithAllDocsVecor(user_query, Vectorizer, VectorizedDocuments, OriginalDocuments)
-    # Return the search result in the response
-    return {"result": result}
+
+def matchingAndRanking(queryVector,documentsVector):
+    # Calculate cosine similarity for vectorized_query and vectorized_docs
+    similarity_scores = cosine_similarity(queryVector, documentsVector)
+    # This result contains objects like this (3796, 0.9705645380366313) first attribute (index in related docs)
+    # second attribute (similarity score)
+    results = list(enumerate(similarity_scores[0]))
+    # Sort results by score (descending) from higher score to lower score 
+    sorted_results = sorted(results, key=lambda x: x[1], reverse=True)
+    return sorted_results
+
+def queryIndexing(processedQuery, vectorizer):
+    vectorized_query = vectorizer.transform([processedQuery])
+    return vectorized_query.toarray().tolist()
+
+# end_point 1
+@app.post("/api/preprocess-query")
+def preprocess_query(query: Query):
+    processedQuery = dataProcessing(query.query)
+    return {'result' : processedQuery}
+
+# end_point 2
+@app.post("/api/indexing-query")
+def indexing_query(query: Query):
+    query_index = queryIndexing(query.query,Vectorizer)
+    return {'result' : query_index}
+
+# end_point 3
+@app.post("/api/matching-and-ranking")
+def matching_and_ranking(query: QueryVector):
+    query_vector_dense = np.array(query.query_vector)
+    query_vector_sparse = csr_matrix(query_vector_dense)
+    sorted_results = matchingAndRanking(query_vector_sparse,VectorizedDocuments)
+    documents = getFirstTenDocument(sorted_results)
+    return {'result' : documents}
+
 
 @app.post("/api/suggestion")
 def suggest_query(query: Query):
@@ -295,7 +315,7 @@ def import_dataset(value: int):
 
 def main():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    print(os.getcwd())
+    # print(os.getcwd())
     nest_asyncio.apply()
     uvicorn.run(app=app, host="localhost", port=8000, log_level="info")
 

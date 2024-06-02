@@ -173,26 +173,58 @@
     }
 
     function search(query) {
-      var searchQuery = query || searchInput.value;
+    var searchQuery = query || searchInput.value;
 
-      fetch("/api/search", {
+    // Call the first API to preprocess the query
+    fetch("/api/preprocess-query", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+            "Content-Type": "application/json"
         },
         body: JSON.stringify({ query: searchQuery })
-      })
-      .then(function(response) {
+    })
+    .then(function(response) {
         return response.json();
-      })
-      .then(function(result) {
+    })
+    .then(function(data) {
+        var processed_query = data.result;
+
+        // Call the second API to index the preprocessed query
+        return fetch("/api/indexing-query", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ query: processed_query })
+        });
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
+        var query_vector = data.result;
+
+        // Call the third API to match and rank documents
+        return fetch("/api/matching-and-ranking", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ query_vector: query_vector })
+        });
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(result) {
         var url = "search-result.html?q=" + encodeURIComponent(searchQuery) + "&results=" + encodeURIComponent(JSON.stringify(result.result));
         window.location.href = url;
-      })
-      .catch(function(error) {
+    })
+    .catch(function(error) {
         console.log(error);
-      });
-    }
+    });
+}
+
     function importDataset() {
             var value = document.querySelector('input[name="datasetRadio"]:checked').value;
 
